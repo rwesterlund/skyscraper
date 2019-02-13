@@ -505,81 +505,88 @@ void Skyscraper::loadConfig(const QCommandLineParser &parser)
 {
   QString current;
   QString distro;
+  QString distroRoot;
+
+#if defined(Q_OS_WIN)
+  distroRoot = QFileInfo(QCoreApplication::applicationFilePath()).absoluteDir().absolutePath();
+#else
+  distroRoot = "/usr/local/etc/skyscraper";
+#endif
 
   /* -----
      Files that should ALWAYS be updated from distributed default files
      ----- */
 
   current = "config.ini.example";
-  distro = "/usr/local/etc/skyscraper/config.ini.example";
+  distro = distroRoot + "/config.ini.example";
   copyFile(distro, current);
 
   current = "README.md";
-  distro = "/usr/local/etc/skyscraper/README.md";
+  distro = distroRoot + "/README.md";
   copyFile(distro, current);
 
   current = "hints.txt";
-  distro = "/usr/local/etc/skyscraper/hints.txt";
+  distro = distroRoot + "/hints.txt";
   copyFile(distro, current);
 
   current = "ARTWORK.md";
-  distro = "/usr/local/etc/skyscraper/ARTWORK.md";
+  distro = distroRoot + "/ARTWORK.md";
   copyFile(distro, current);
 
   current = "artwork.xml.example1";
-  distro = "/usr/local/etc/skyscraper/artwork.xml.example1";
+  distro = distroRoot + "/artwork.xml.example1";
   copyFile(distro, current);
 
   current = "artwork.xml.example2";
-  distro = "/usr/local/etc/skyscraper/artwork.xml.example2";
+  distro = distroRoot + "/artwork.xml.example2";
   copyFile(distro, current);
 
   current = "artwork.xml.example3";
-  distro = "/usr/local/etc/skyscraper/artwork.xml.example3";
+  distro = distroRoot + "/artwork.xml.example3";
   copyFile(distro, current);
 
   current = "artwork.xml.example4";
-  distro = "/usr/local/etc/skyscraper/artwork.xml.example4";
+  distro = distroRoot + "/artwork.xml.example4";
   copyFile(distro, current);
 
   current = "mameMap.csv";
-  distro = "/usr/local/etc/skyscraper/mameMap.csv";
+  distro = distroRoot + "/mameMap.csv";
   copyFile(distro, current);
   
   current = "tgdb_developers.json";
-  distro = "/usr/local/etc/skyscraper/tgdb_developers.json";
+  distro = distroRoot + "/tgdb_developers.json";
   copyFile(distro, current);
 
   current = "tgdb_publishers.json";
-  distro = "/usr/local/etc/skyscraper/tgdb_publishers.json";
+  distro = distroRoot + "/tgdb_publishers.json";
   copyFile(distro, current);
 
   current = "resources/boxfront.png";
-  distro = "/usr/local/etc/skyscraper/resources/boxfront.png";
+  distro = distroRoot + "/resources/boxfront.png";
   copyFile(distro, current);
 
   current = "resources/boxside.png";
-  distro = "/usr/local/etc/skyscraper/resources/boxside.png";
+  distro = distroRoot + "/resources/boxside.png";
   copyFile(distro, current);
 
   current = "cache/README.md";
-  distro = "/usr/local/etc/skyscraper/docs/CACHE.md";
+  distro = distroRoot + "/docs/CACHE.md";
   copyFile(distro, current);
 
   current = "cache/priorities.xml.example";
-  distro = "/usr/local/etc/skyscraper/cache/priorities.xml.example";
+  distro = distroRoot + "/cache/priorities.xml.example";
   copyFile(distro, current);
 
   current = "import/README.md";
-  distro = "/usr/local/etc/skyscraper/import/IMPORT.md";
+  distro = distroRoot + "/import/IMPORT.md";
   copyFile(distro, current);
 
   current = "import/definitions.dat.example1";
-  distro = "/usr/local/etc/skyscraper/import/definitions.dat.example1";
+  distro = distroRoot + "/import/definitions.dat.example1";
   copyFile(distro, current);
 
   current = "import/definitions.dat.example2";
-  distro = "/usr/local/etc/skyscraper/import/definitions.dat.example2";
+  distro = distroRoot + "/import/definitions.dat.example2";
   copyFile(distro, current);
 
   /* -----
@@ -587,32 +594,32 @@ void Skyscraper::loadConfig(const QCommandLineParser &parser)
     ----- */
 
   current = "artwork.xml";
-  distro = "/usr/local/etc/skyscraper/artwork.xml";
+  distro = distroRoot + "/artwork.xml";
   copyFile(distro, current, false); // False means it won't overwrite if it exists
 
   current = "aliasMap.csv";
-  distro = "/usr/local/etc/skyscraper/aliasMap.csv";
+  distro = distroRoot + "/aliasMap.csv";
   copyFile(distro, current, false);
 
   current = "resources/maskexample.png";
-  distro = "/usr/local/etc/skyscraper/resources/maskexample.png";
+  distro = distroRoot + "/resources/maskexample.png";
   copyFile(distro, current, false);
 
   current = "resources/frameexample.png";
-  distro = "/usr/local/etc/skyscraper/resources/frameexample.png";
+  distro = distroRoot + "/resources/frameexample.png";
   copyFile(distro, current, false);
 
   current = "resources/scanlines1.png";
-  distro = "/usr/local/etc/skyscraper/resources/scanlines1.png";
+  distro = distroRoot + "/resources/scanlines1.png";
   copyFile(distro, current, false);
 
   current = "resources/scanlines2.png";
-  distro = "/usr/local/etc/skyscraper/resources/scanlines2.png";
+  distro = distroRoot + "/resources/scanlines2.png";
   copyFile(distro, current, false);
 
   // Copy one of the example definitions.dat files if none exists
   current = "import/definitions.dat";
-  distro = "/usr/local/etc/skyscraper/import/definitions.dat.example2";
+  distro = distroRoot + "/import/definitions.dat.example2";
   copyFile(distro, current, false);
 
   /* -----

@@ -32,13 +32,15 @@
 #include "platform.h"
 #include "strtools.h"
 
+#if defined(Q_OS_WIN)
+#define SCRIPT_FILENAME "skyscript.bat"
+#else
+#define SCRIPT_FILENAME "skyscript.sh"
+#endif
+
 Scripter::Scripter()
 {
   printf("%s", StrTools::getVersionHeader().toStdString().c_str());
-
-#ifdef Q_OS_WIN
-  printf("\033[1;31mYou are running Skyscraper in 'simple mode' on a Windows machine. Windows is not currently supported in this mode. The generated script WILL NOT WORK!\033[0m\n\n");
-#endif
 
   printf("\033[1;33mIMPORTANT!!!\033[0m You are running Skyscraper in 'simple mode'. This mode is meant for first-time scrapings only! For any subsequent scrapings of a platform consider scraping using '\033[1;32mSkyscraper -p [platform]\033[0m' which will make use of the resources you already have available in the resource cache.\n\nFor advanced users be sure be sure to check out all of the available command line options with '\033[1;32mSkyscraper --help\033[0m'. Complete documentation of all features can be found at: \033[1;32mhttps://github.com/muldjord/skyscraper\033[0m\n\nYou will now be asked a bunch of questions. Default for most of these questions will be optimal and can therefore be answered simply by pressing enter. Only change them if you know what you are doing.\033[0m\n");
 
@@ -133,9 +135,9 @@ Scripter::Scripter()
   printf("\033[1;34mDo you wish to checksum the files inside compressed files (Answer 'y' ONLY if you've manually compressed your roms)?\033[0m (y/N)? ");
   getline(std::cin, unpackStr);
 
-  QFile scriptFile(QDir::homePath() + "/.skyscraper/skyscript.sh");
+  QFile scriptFile(QDir::homePath() + "/.skyscraper/" SCRIPT_FILENAME);
   if(!scriptFile.open(QIODevice::WriteOnly)) {
-    printf("Couldn't open '~/.skyscraper/skyscript.sh' file for writing, please check permissions and rerun Skyscraper\nNow quitting...\n");
+    printf("Couldn't open '~/.skyscraper/" SCRIPT_FILENAME "' file for writing, please check permissions and rerun Skyscraper\nNow quitting...\n");
     exit(1);
   }
 
@@ -171,7 +173,9 @@ Scripter::Scripter()
 
   baseStr += " --unattend";
   
+#if !defined(Q_OS_WIN)
   scriptFile.write("#!/bin/bash\n");
+#endif
   foreach(QString scraper, Platform::getScrapers(QString(platformStr.c_str()))) {
     if(scraper != "cache") {
       scriptFile.write((baseStr + gatherStr + " -s " + scraper.toStdString() + "\n").c_str());
@@ -183,11 +187,11 @@ Scripter::Scripter()
   
   std::string runScriptStr = "";
   printf("\n");
-  printf("The script '\033[1;32m~/.skyscraper/skyscript.sh\033[0m' has been created. Running this script will do multiple scraping runs for the chosen platform for the most optimal result. \033[1;34mDo you wish to run it now?\033[0m (Y/n)? ");
+  printf("The script '\033[1;32m~/.skyscraper/" SCRIPT_FILENAME "\033[0m' has been created. Running this script will do multiple scraping runs for the chosen platform for the most optimal result. \033[1;34mDo you wish to run it now?\033[0m (Y/n)? ");
   getline(std::cin, runScriptStr);
   if(runScriptStr == "y" || runScriptStr == "Y" || runScriptStr == "") {
     printf("\nRunning script...\n");
-    QProcess::execute("sh " + QDir::homePath() + "/.skyscraper/skyscript.sh");
+    QProcess::execute("sh " + QDir::homePath() + "/.skyscraper/" SCRIPT_FILENAME);
   } else {
     printf("\nUser chose not to run script, now exiting...\n");
     exit(0);

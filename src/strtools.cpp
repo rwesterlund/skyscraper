@@ -109,8 +109,8 @@ QByteArray StrTools::magic(const QByteArray str)
 {
   QByteArray magicStr("WowMuchEncryptedVeryImpressIGuessThisHasToBeQuiteLongToAlsoSupportSomeVeryLongKeys");
 
-  int strChars[str.length()];
-  int magicChars[str.length()];
+  int *strChars = new int[str.length()];
+  int *magicChars = new int[str.length()];
 
   for(int a = 0; a < str.length(); ++a) {
     strChars[a] = str.at(a);
@@ -125,6 +125,9 @@ QByteArray StrTools::magic(const QByteArray str)
     thingie.append(QString::number(strChars[a] += magicChars[a]) + ";");
   }
 
+  delete strChars;
+  delete magicChars;
+
   thingie = thingie.left(thingie.length() - 1);
   
   return thingie; 
@@ -136,8 +139,8 @@ QByteArray StrTools::unMagic(const QByteArray str)
 
   QByteArray magicStr("WowMuchEncryptedVeryImpressIGuessThisHasToBeQuiteLongToAlsoSupportSomeVeryLongKeys");
 
-  int strChars[length];
-  int magicChars[length];
+  int *strChars = new int[length];
+  int *magicChars = new int[length];
 
   for(int a = 0; a < length; ++a) {
     strChars[a] = str.split(';').at(a).toInt();
@@ -149,6 +152,9 @@ QByteArray StrTools::unMagic(const QByteArray str)
   for(int a = 0; a < length; ++a) {
     thingie.append(QChar(strChars[a] -= magicChars[a]));
   }
+
+  delete strChars;
+  delete magicChars;
 
   return thingie; 
 }
