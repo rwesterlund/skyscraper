@@ -147,7 +147,9 @@ list(TRANSFORM RESOURCES_SUBDIR_RESOURCES PREPEND "${PROJECT_SOURCE_DIR}/")
 
 
 add_executable(Skyscraper ${SOURCES} ${PLATFORM_SOURCES})
-target_compile_definitions(Skyscraper PRIVATE VERSION="3.0.1")
+file(READ "VERSION" VERSION_IN OFFSET 8)
+string(STRIP "${VERSION_IN}" VERSION_IN)
+target_compile_definitions(Skyscraper PRIVATE VERSION="${VERSION_IN}")
 target_link_libraries(Skyscraper Qt5::Core Qt5::Gui Qt5::Xml Qt5::Network)
 
 add_custom_command(

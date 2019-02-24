@@ -23,8 +23,12 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA.
  */
 
+#include <qsystemdetection.h>
+
 #include <iostream>
+#if !defined(Q_OS_WIN)
 #include <sys/statvfs.h>
+#endif
 
 #include <QThread>
 #include <QSettings>

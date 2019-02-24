@@ -91,6 +91,9 @@ void sigHandler(int signal) {
 
 int main(int argc, char *argv[])
 {
+#if defined(Q_OS_WIN)
+	signal(SIGINT, sigHandler);
+#else
   struct sigaction sigIntHandler;
   
   sigIntHandler.sa_handler = sigHandler;
@@ -98,6 +101,7 @@ int main(int argc, char *argv[])
   sigIntHandler.sa_flags = 0;
   
   sigaction(SIGINT, &sigIntHandler, NULL);
+#endif
   
   QCoreApplication app(argc, argv);
   app.setApplicationVersion(VERSION);
