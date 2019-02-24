@@ -45,7 +45,7 @@ bool EmulationStation::loadOldGameList(const QString &gameListFileString)
   return false;
 }
 
-bool EmulationStation::skipExisting(QList<GameEntry> &gameEntries, QSharedPointer<Queue> queue) 
+bool EmulationStation::skipExisting(QList<GameEntry> &gameEntries, QSharedPointer<Queue> queue, const QString inputFolder) 
 {
   gameEntries = oldEntries;
 
@@ -57,12 +57,28 @@ bool EmulationStation::skipExisting(QList<GameEntry> &gameEntries, QSharedPointe
       printf(".");
       fflush(stdout);
     }
-    QFileInfo current(gameEntries.at(a).path);
+    QString filePath = gameEntries.at(a).path;
+    // Make sure we readd the input path if the 'path' is relative
+    if(filePath.left(1) == ".") {
+      filePath.remove(0, 1);
+      filePath.prepend(inputFolder);
+    }
+    QFileInfo current(filePath);
     for(int b = 0; b < queue->length(); ++b) {
-      if(current.fileName() == queue->at(b).fileName()) {
-	queue->removeAt(b);
-	// We assume filename is unique, so break after getting first hit
-	break;
+      if(current.isFile()) {
+	if(current.fileName() == queue->at(b).fileName()) {
+	  queue->removeAt(b);
+	  // We assume filename is unique, so break after getting first hit
+	  break;
+	}
+      } else if(current.isDir()) {
+	// Use current.absoluteFilePath here since it is already a path. Otherwise it will use
+	// the parent folder
+	if(current.absoluteFilePath() == queue->at(b).absolutePath()) {
+	  queue->removeAt(b);
+	  // We assume filename is unique, so break after getting first hit
+	  break;
+	}
       }
     }
   }
@@ -72,7 +88,9 @@ bool EmulationStation::skipExisting(QList<GameEntry> &gameEntries, QSharedPointe
 void EmulationStation::preserveFromOld(GameEntry &entry)
 {
   foreach(GameEntry oldEntry, oldEntries) {
-    if(oldEntry.path == entry.path) {
+    QString oldFileName = oldEntry.path.mid(oldEntry.path.indexOf("/"), oldEntry.path.length());
+    QString fileName = entry.path.mid(entry.path.indexOf("/"), entry.path.length());
+    if(oldFileName == fileName) {
       if(entry.eSFavorite.isEmpty())
 	entry.eSFavorite = oldEntry.eSFavorite;
       if(entry.eSHidden.isEmpty())
@@ -120,27 +138,41 @@ void EmulationStation::assembleList(QString &finalOutput, const QList<GameEntry>
     dots++;
 
     QString entryType = "game";
-    QString entryPath = entry.path;
 
-    // Check if game is in subfolder and if it's a .cue or .m3u file.
-    // If so, change entry to <folder> type.
+    // Make sure we readd the input path if the 'path' is relative. This happens when user
+    // skips entries.
+    if(entry.path.left(1) == ".") {
+      entry.path.remove(0, 1);
+      entry.path.prepend(config->inputFolder);
+    }
     QFileInfo entryInfo(entry.path);
-    QString entryAbsolutePath = entryInfo.absolutePath();
-    if(entryAbsolutePath.count("/") == config->inputFolder.count("/") + 1) {
-      QString entrySuffix = entryInfo.suffix();
-      if((entrySuffix == "cue" ||
-	  entrySuffix == "m3u") &&
-	 QDir(entryAbsolutePath, "*.cue *.m3u").count() == 1) {
-	entryType = "folder";
-	entryPath = entryAbsolutePath;
+    
+    if(entryInfo.isFile()) {
+      // Check if game is in subfolder and if it's a .cue or .m3u file.
+      // If so, change entry to <folder> type.
+      QString entryAbsolutePath = entryInfo.absolutePath();
+      if(entryAbsolutePath.count("/") == config->inputFolder.count("/") + 1) {
+	QString entrySuffix = entryInfo.suffix();
+	if((entrySuffix == "cue" ||
+	    entrySuffix == "m3u") &&
+	   QDir(entryAbsolutePath, "*.cue *.m3u").count() == 1) {
+	  entryType = "folder";
+	  entry.path = entryAbsolutePath;
+	}
       }
+    } else if(entryInfo.isDir()) {
+      entryType = "folder";
     }
 
     // Preserve certain data from old game list entry, but only for empty data
     preserveFromOld(entry);
 
+    if(config->relativePaths) {
+      entry.path.replace(config->inputFolder, ".");
+    }
+
     finalOutput.append("  <" + entryType + ">\n");
-    finalOutput.append("    <path>" + (config->relativePaths?StrTools::xmlEscape(entryPath).replace(config->inputFolder, "."):StrTools::xmlEscape(entryPath)) + "</path>\n");
+    finalOutput.append("    <path>" + StrTools::xmlEscape(entry.path) + "</path>\n");
     if(config->brackets) {
       finalOutput.append("    <name>" + StrTools::xmlEscape(entry.title + (entry.parNotes != ""?" " + entry.parNotes:"") + (entry.sqrNotes != ""?" " + entry.sqrNotes:"")) + "</name>\n");
     } else {

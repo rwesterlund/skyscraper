@@ -34,6 +34,11 @@ ScreenScraper::ScreenScraper(Settings *config) : AbstractScraper(config)
 {
   connect(&manager, &NetComm::dataReady, &q, &QEventLoop::quit);
 
+  connect(&limitTimer, &QTimer::timeout, &limiter, &QEventLoop::quit);
+  limitTimer.setInterval(1000); // 1 second request limit
+  limitTimer.setSingleShot(false);
+  limitTimer.start();
+
   baseUrl = "http://www.screenscraper.fr";
 
   fetchOrder.append(PUBLISHER);
@@ -54,11 +59,22 @@ ScreenScraper::ScreenScraper(Settings *config) : AbstractScraper(config)
 void ScreenScraper::getSearchResults(QList<GameEntry> &gameEntries,
 				     QString searchName, QString platform)
 {
-  QString gameUrl = "https://www.screenscraper.fr/api2/jeuInfos.php?devid=muldjord&devpassword=" + StrTools::unMagic("204;198;236;130;203;181;203;126;191;167;200;198;192;228;169;156") + "&softname=skyscraper" VERSION "&ssid=" + config->user + "&sspassword=" + config->password + "&output=xml&" + searchName;
+  limiter.exec();
+  QString platformId = getPlatformId(config->platform);
+  if(platformId == "na") {
+    reqRemaining = 0;
+    printf("\033[0;31mPlatform not supported by ScreenScraper or it hasn't yet been included in Skyscraper for this module...\033[0m\n");
+    return;
+  }
+  QString gameUrl = "https://www.screenscraper.fr/api2/jeuInfos.php?devid=muldjord&devpassword=" + StrTools::unMagic("204;198;236;130;203;181;203;126;191;167;200;198;192;228;169;156") + "&softname=skyscraper" VERSION + (config->user.isEmpty()?"":"&ssid=" + config->user) + (config->password.isEmpty()?"":"&sspassword=" + config->password) + (platformId.isEmpty()?"":"&systemeid=" + platformId) + "&output=xml&" + searchName;
   manager.request(gameUrl);
   q.exec();
   data = manager.getData();
-  if(data.indexOf("Erreur") != -1) {
+  data.replace(" & ", " &amp; ");
+  if(data.contains("<roms>") && data.contains("</roms>")) {
+    data.remove(data.indexOf("<roms>") + 6, data.indexOf("</roms>") - data.indexOf("<roms>") - 6);
+  }
+  if(data.contains("Erreur")) {
     return;
   }
   
@@ -66,6 +82,9 @@ void ScreenScraper::getSearchResults(QList<GameEntry> &gameEntries,
 
   // Check if xml is valid. If not, skip
   if(!xmlDoc.setContent(data)) {
+    if(config->verbosity > 2)
+      printf("ScreenScraper returned:\n%s\n", data.data());
+    printf("\033[1;31mScreenScraper APIv2 returned invalid XML for the following query:\033[0m\n%s\n", searchName.toStdString().c_str());
     return;
   }
 
@@ -384,12 +403,10 @@ QList<QString> ScreenScraper::getSearchNames(const QFileInfo &info)
 
   QList<QString> searchNames;
   if(info.size() != 0) {
-    searchNames.append("romnom=" + hashList.at(0) + "&crc=" + hashList.at(1) + "&md5=" + hashList.at(2) + "&romtaille=" + QString::number(info.size()));
-    searchNames.append("crc=" + hashList.at(1));
-    searchNames.append("md5=" + hashList.at(2));
-    searchNames.append("sha1=" + hashList.at(3));
+    searchNames.append("romnom=" + hashList.at(0) + "&crc=" + hashList.at(1) + "&md5=" + hashList.at(2) + "&sha1=" + hashList.at(3) + "&romtaille=" + QString::number(info.size()));
+  } else {
+    searchNames.append("romnom=" + hashList.at(0));
   }
-  searchNames.append("romnom=" + hashList.at(0));
 
   return searchNames;
 }
@@ -442,3 +459,154 @@ QString ScreenScraper::getXmlText(QString node, int attr, QString type)
   return QString();
 }
   
+QString ScreenScraper::getPlatformId(const QString platform)
+{
+  if(platform == "3do") {
+    return "29";
+  } else if(platform == "amiga") {
+    return "64";
+  } else if(platform == "aga") {
+    return "111";
+  } else if(platform == "cd32") {
+    return "130";
+  } else if(platform == "cdtv") {
+    return "129";
+  } else if(platform == "amstradcpc") {
+    return "65";
+  } else if(platform == "apple2") {
+    return "86";
+  } else if(platform == "arcade") {
+    return "75";
+  } else if(platform == "atari800") {
+    return "43";
+  } else if(platform == "atari2600") {
+    return "26";
+  } else if(platform == "atari5200") {
+    return "40";
+  } else if(platform == "atari7800") {
+    return "41";
+  } else if(platform == "atarijaguar") {
+    return "27";
+  } else if(platform == "atarilynx") {
+    return "28";
+  } else if(platform == "atarist") {
+    return "42";
+  } else if(platform == "c16") {
+    return "na";
+  } else if(platform == "c64") {
+    return "66";
+  } else if(platform == "c128") {
+    return "na";
+  } else if(platform == "coco") {
+    return "144";
+  } else if(platform == "coleco") {
+    return "75";
+  } else if(platform == "daphne") {
+    return "49";
+  } else if(platform == "dragon32") {
+    return "91";
+  } else if(platform == "dreamcast") {
+    return "23";
+  } else if(platform == "fba") {
+    return "75";
+  } else if(platform == "fds") {
+    return "106";
+  } else if(platform == "gameandwatch") {
+    return "52";
+  } else if(platform == "gamegear") {
+    return "21";
+  } else if(platform == "gb") {
+    return "9";
+  } else if(platform == "gba") {
+    return "12";
+  } else if(platform == "gbc") {
+    return "10";
+  } else if(platform == "gc") {
+    return "13";
+  } else if(platform == "genesis") {
+    return "1";
+  } else if(platform == "intellivision") {
+    return "115";
+  } else if(platform == "mame-advmame") {
+    return "75";
+  } else if(platform == "mame-libretro") {
+    return "75";
+  } else if(platform == "mame-mame4all") {
+    return "75";
+  } else if(platform == "mastersystem") {
+    return "2";
+  } else if(platform == "megacd") {
+    return "20";
+  } else if(platform == "megadrive") {
+    return "1";
+  } else if(platform == "msx") {
+    return "113";
+  } else if(platform == "n64") {
+    return "14";
+  } else if(platform == "nds") {
+    return "15";
+  } else if(platform == "neogeo") {
+    return "142";
+  } else if(platform == "nes") {
+    return "3";
+  } else if(platform == "ngp") {
+    return "25";
+  } else if(platform == "ngpc") {
+    return "82";
+  } else if(platform == "oric") {
+    return "131";
+  } else if(platform == "pc") {
+    return "135";
+  } else if(platform == "pc88") {
+    return "na";
+  } else if(platform == "pcfx") {
+    return "72";
+  } else if(platform == "pcengine") {
+    return "31";
+  } else if(platform == "ports") {
+    return "na";
+  } else if(platform == "psp") {
+    return "61";
+  } else if(platform == "psx") {
+    return "57";
+  } else if(platform == "saturn") {
+    return "22";
+  } else if(platform == "scummvm") {
+    return "123";
+  } else if(platform == "sega32x") {
+    return "19";
+  } else if(platform == "segacd") {
+    return "20";
+  } else if(platform == "sg-1000") {
+    return "109";
+  } else if(platform == "snes") {
+    return "4";
+  } else if(platform == "ti99") {
+    return "205";
+  } else if(platform == "trs-80") {
+    return "144";
+  } else if(platform == "vectrex") {
+    return "102";
+  } else if(platform == "vic20") {
+    return "73";
+  } else if(platform == "videopac") {
+    return "104";
+  } else if(platform == "virtualboy") {
+    return "11";
+  } else if(platform == "wii") {
+    return "16";
+  } else if(platform == "wonderswan") {
+    return "45";
+  } else if(platform == "wonderswancolor") {
+    return "46";
+  } else if(platform == "x68000") {
+    return "79";
+  } else if(platform == "x1") {
+    return "na";
+  } else if(platform == "zmachine") {
+    return "na";
+  } else if(platform == "zxspectrum") {
+    return "76";
+  }
+  return "na";
+}

@@ -45,6 +45,8 @@ class Skyscraper : public QObject
 public:
   Skyscraper(const QCommandLineParser &parser, const QString &currentDir);
   ~Skyscraper();
+  QSharedPointer<Queue> queue;
+  bool threadsRunning = false;
 
 public slots:
   void run();
@@ -74,7 +76,7 @@ private:
   AbstractFrontend *frontend;
 
   QSharedPointer<Cache> cache;
-  
+
   QList<GameEntry> gameEntries;
   QList<QString> cliFiles;
   QMutex entryMutex;

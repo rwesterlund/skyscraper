@@ -1,7 +1,7 @@
 /***************************************************************************
- *            queue.cpp
+ *            fxsharpen.h
  *
- *  Fri Mar 9 12:00:00 CEST 2018
+ *  Sat Feb 3 12:00:00 CEST 2018
  *  Copyright 2018 Lars Muldjord
  *  muldjordlars@gmail.com
  ****************************************************************************/
@@ -23,33 +23,24 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA.
  */
 
-#include "queue.h"
+#ifndef FXSHARPEN_H
+#define FXSHARPEN_H
 
-Queue::Queue()
-{
-}
+#include <QImage>
 
-bool Queue::hasEntry()
-{
-  queueMutex.lock();
-  if(isEmpty()) {
-    queueMutex.unlock();
-    return false;
-  }
-  return true;
-}
+#include "layer.h"
 
-QFileInfo Queue::takeEntry()
+class FxSharpen : public QObject
 {
-  QFileInfo info = first();
-  removeFirst();
-  queueMutex.unlock();
-  return info;
-}
+  Q_OBJECT
 
-void Queue::clearAll()
-{
-  queueMutex.lock();
-  clear();
-  queueMutex.unlock();
-}
+public:
+  FxSharpen();
+  QImage applyEffect(const QImage &src, const Layer &layer);
+
+private:
+  int truncate(int value);
+
+};
+
+#endif // FXSHARPEN_H

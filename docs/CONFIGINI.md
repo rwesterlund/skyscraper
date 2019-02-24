@@ -3,7 +3,7 @@ Look below to find a thorough description of all options and sections available 
 
 Please take note that almost all of these options are set at a useful default (and can therefore be left out) and should only be set if your use case requires it.
 
-If you've installed Skyscraper through the RetroPie-Setup the executable is instead located at `/opt/retropie/supplementary/skyscraper/Skyscraper`. In that case I recommend creating a symbolic link to the executable. Do this by running `$ sudo ln -s /opt/retropie/supplementary/skyscraper/Skyscraper /usr/local/bin/Skyscraper` (without the `$`). This will enable you to just type `Skyscraper` when running it from command line.
+If you've installed Skyscraper through the RetroPie-Setup the executable is instead located at `/opt/retropie/supplementary/skyscraper/Skyscraper`. In that case I recommend creating a symbolic link to the executable. Do this by running `$ sudo ln -s /opt/retropie/supplementary/skyscraper/Skyscraper /usr/local/bin/Skyscraper` (without the `$`). This will allow you to just type `Skyscraper` when running it from command line.
 
 Many options can be set on two levels; either `[main]` or `[<PLATFORM>]`. `<PLATFORM>` can be any of the supported platforms (check list with `--help` under the `-p` option), in which case the settings will only be applied while scraping that particular platform. Settings in the `[main]` section will be used while scraping any platform. Setting an option in a `[<PLATFORM>]` section will override any similar option set in `[main]`.
 
@@ -11,7 +11,7 @@ For options dedicated to a single scraping module you can create sections for ea
 
 You can find an example config file at `~/.skyscraper/config.ini.example`. This file contains all available options. Just copy the file to `config.ini` and uncomment and edit the ones you wish to use by removing the `#` in front of the variables. Remember to also uncomment the section the option relates to such as `[main]` or `[amiga]`.
 
-NOTE! You can set a custom configuration file with the `-c [filename]` command line option. Read more all available command line options [here](CLIHELP.md).
+NOTE! You can set a custom configuration file with the `-c <FILENAME>` command line option. Read more all available command line options [here](CLIHELP.md).
 
 ###### Example config.ini file
 ```
@@ -110,7 +110,7 @@ NOTE! Only enable this option if you are having problems getting the roms identi
 *Allowed in section(s): `[main]`, `[<PLATFORM>]`*
 
 #### frontend="emulationstation"
-Sets the frontend you wish to export a game list for. By default Skyscraper will export an EmulationStation game list, but other frontends are supported aswell. If exporting for the `attractmode` frontend, please also take note of the required `emulator=""` option that goes along with using the `attractmode` frontend.
+Sets the frontend you wish to export a game list for. By default Skyscraper will export an EmulationStation game list, but other frontends are supported as well. If exporting for the `attractmode` frontend, please also take note of the required `emulator=""` option that goes along with using the `attractmode` frontend.
 
 *Allowed in section(s): `[main]`*
 
@@ -263,3 +263,8 @@ NOTE! Please consider using the command line option `--endat <FILENAME>` instead
 Some scraping modules require a user key or a user id + password to work. Check the scraping module overview to see the specific requirements for each module [here](SCRAPINGMODULES.md).
 
 *Allowed in section(s): `[<SCRAPING MODULE>]`*
+
+#### spaceCheck="false"
+Skyscraper will continuously check if you are running low on disk space. If you go below 200 MB in either the game list export folder or the resource cache folder, it will quit to make sure your system doesn't become unstable. Some types of file systems provide a faulty result to Skyscraper when it comes to these checks and thus it can be necessary to disable it altogether. You can use this option to do just that.
+
+*Allowed in section(s): `[main]`*

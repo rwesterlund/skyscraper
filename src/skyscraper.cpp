@@ -24,6 +24,7 @@
  */
 
 #include <iostream>
+#include <sys/statvfs.h>
 
 #include <QThread>
 #include <QSettings>
@@ -35,7 +36,9 @@
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QJsonArray>
+#if QT_VERSION >= 0x050400
 #include <QStorageInfo>
+#endif
 
 #include "skyscraper.h"
 #include "strtools.h"
@@ -234,9 +237,9 @@ void Skyscraper::run()
   skippedFile.close();
 
   // Create shared queue with files to process
-  QSharedPointer<Queue> queue = QSharedPointer<Queue>(new Queue());
+  queue = QSharedPointer<Queue>(new Queue());
   QList<QFileInfo> infoList = inputDir.entryInfoList();
-  if(config.startAt != "" && !infoList.isEmpty()) {
+  if(!config.startAt.isEmpty() && !infoList.isEmpty()) {
     QFileInfo startAt(config.startAt);
     if(!startAt.exists()) {
       startAt.setFile(config.currentDir + "/" + config.startAt);
@@ -245,12 +248,12 @@ void Skyscraper::run()
       startAt.setFile(inputDir.absolutePath() + "/" + config.startAt);
     }
     if(startAt.exists()) {
-      while(infoList.first().fileName() != startAt.fileName()) {
+      while(infoList.first().fileName() != startAt.fileName() && !infoList.isEmpty()) {
 	infoList.removeFirst();
       }
     }
   }
-  if(config.endAt != "" && !infoList.isEmpty()) {
+  if(!config.endAt.isEmpty() && !infoList.isEmpty()) {
     QFileInfo endAt(config.endAt);
     if(!endAt.exists()) {
       endAt.setFile(config.currentDir + "/" + config.endAt);
@@ -259,7 +262,7 @@ void Skyscraper::run()
       endAt.setFile(inputDir.absolutePath() + "/" + config.endAt);
     }
     if(endAt.exists()) {
-      while(infoList.last().fileName() != endAt.fileName()) {
+      while(infoList.last().fileName() != endAt.fileName() && !infoList.isEmpty()) {
 	infoList.removeLast();
       }
     }
@@ -303,7 +306,7 @@ void Skyscraper::run()
 	    getline(std::cin, userInput);
 	  }
 	  if((userInput == "y" || userInput == "Y") && frontend->canSkip()) {
-	    frontend->skipExisting(gameEntries, queue);
+	    frontend->skipExisting(gameEntries, queue, config.inputFolder);
 	  }
 	}
       }
@@ -350,6 +353,7 @@ void Skyscraper::run()
   // Ready, set, GO!!! Start all threads
   foreach(QThread *thread, threadList) {
     thread->start();
+    threadsRunning = true;
   }
 }
 
@@ -443,13 +447,19 @@ void Skyscraper::entryReady(GameEntry entry, QString output, QString debug)
   }
   currentFile++;
 
-  if(QStorageInfo(QDir(config.mediaFolder)).bytesFree() < 209715200 ||
-     QStorageInfo(QDir::current()).bytesFree() < 209715200) {
-    printf("\033[1;31mYou have very little disk space left, please free up some space and try again. Now aborting...\033[0m\n\n");
-    doneThreads = config.threads - 1;
-    checkThreads();
-    exit(0);
+#if QT_VERSION >= 0x050400
+  qint64 spaceLimit = 209715200;
+  if(config.spaceCheck && (QStorageInfo(QDir(config.mediaFolder)).bytesFree() < spaceLimit ||
+			   QStorageInfo(QDir::current()).bytesFree() < spaceLimit)) {
+    printf("\033[1;31mYou have very little disk space left either on the Skyscraper resource cache drive or on the game list and media export drive, please free up some space and try again. Now aborting...\033[0m\n\nNote! You can disable this check by setting 'spaceCheck=\"false\"' in the '[main]' section of config.ini.\n\n");
+    // Clean up and exit
+    if(config.scraper == "cache") {
+      config.pretend = true;
+    }
+    // By clearing the queue here we basically tell Skyscraper to stop and quit nicely
+    queue->clearAll();
   }
+#endif
 }
 
 void Skyscraper::checkThreads()
@@ -460,19 +470,13 @@ void Skyscraper::checkThreads()
   if(doneThreads != config.threads)
     return;
 
-  printf("\033[1;34m---- Scraping run completed! YAY! ----\033[0m\n");
-  if(!config.cacheFolder.isEmpty()) {
-    cache->write();
-  }
-
-  frontend->sortEntries(gameEntries);
-
-  QString finalOutput;
-  printf("Assembling game list...");
-  frontend->assembleList(finalOutput, gameEntries);
-  printf(" \033[1;32mDone!!!\033[0m\n");
-    
   if(!config.pretend && config.scraper == "cache") {
+    printf("\033[1;34m---- Game list generation run completed! YAY! ----\033[0m\n");
+    QString finalOutput;
+    frontend->sortEntries(gameEntries);
+    printf("Assembling game list...");
+    frontend->assembleList(finalOutput, gameEntries);
+    printf(" \033[1;32mDone!!!\033[0m\n");
     QFile gameListFile(gameListFileString);
     printf("Now writing '%s'... ", gameListFileString.toStdString().c_str());
     fflush(stdout);
@@ -483,8 +487,13 @@ void Skyscraper::checkThreads()
     } else {
       printf("\033[1;31mCouldn't open file for writing!!!\nAll that work for nothing... :(\033[0m\n");
     }
+  } else {
+    printf("\033[1;34m---- Resource gathering run completed! YAY! ----\033[0m\n");
+    if(!config.cacheFolder.isEmpty()) {
+      cache->write();
+    }
   }
-
+  
   printf("\033[1;34m---- And here are some neat stats :) ----\033[0m\n");
   printf("Total completion time: \033[1;33m%s\033[0m\n\n", secsToString(timer.elapsed()).toStdString().c_str());
   if(found > 0) {
@@ -494,7 +503,7 @@ void Skyscraper::checkThreads()
 	   (int)((double)avgCompleteness / (double)found));
   }
   printf("\033[1;34mTotal number of games: %d\033[0m\n", totalFiles);
-  printf("\033[1;32mSuccessfully scraped games: %d\033[0m\n", found);
+  printf("\033[1;32mSuccessfully processed games: %d\033[0m\n", found);
   printf("\033[1;33mSkipped games: %d (Filenames saved to '~/.skyscraper/%s')\033[0m\n\n", notFound, skippedFileString.toStdString().c_str());
 
   // All done, now clean up and exit to terminal
@@ -779,6 +788,9 @@ void Skyscraper::loadConfig(const QCommandLineParser &parser)
   if(settings.contains("importFolder")) {
     config.importFolder = settings.value("importFolder").toString();
   }
+  if(settings.contains("spaceCheck")) {
+    config.spaceCheck = settings.value("spaceCheck").toBool();
+  }
   settings.endGroup();
 
   // Platform specific configs, overrides main and defaults
@@ -928,6 +940,21 @@ void Skyscraper::loadConfig(const QCommandLineParser &parser)
   }
   if(settings.contains("interactive")) {
     config.interactive = settings.value("interactive").toBool();
+  }
+  if(settings.contains("cacheCovers")) {
+    config.cacheCovers = settings.value("cacheCovers").toBool();
+  }
+  if(settings.contains("cacheScreenshots")) {
+    config.cacheScreenshots = settings.value("cacheScreenshots").toBool();
+  }
+  if(settings.contains("cacheWheels")) {
+    config.cacheWheels = settings.value("cacheWheels").toBool();
+  }
+  if(settings.contains("cacheMarquees")) {
+    config.cacheMarquees = settings.value("cacheMarquees").toBool();
+  }
+  if(settings.contains("videos")) {
+    config.videos = settings.value("videos").toBool();
   }
   settings.endGroup();
 
@@ -1252,22 +1279,21 @@ void Skyscraper::doPrescrapeJobs()
     printf("\033[1;33mForcing 1 thread to accomodate limits in OpenRetro scraping module\033[0m\n\n");
     config.threads = 1;
   } else if(config.scraper == "igdb") {
+    bool exitNow = false;
     printf("\033[1;33mForcing 1 thread when using the IGDB scraping module\033[0m\n\n");
+    printf("\033[1;32mTHIS MODULE IS POWERED BY IGDB.COM\033[0m\n");
     config.threads = 1;
-    config.romLimit = 5;
-    printf("Fetching IGDB key status, just a sec...\n");
+    config.romLimit = 35;
+    printf("Fetching key status, just a sec...\n");
     manager.request("https://api-v3.igdb.com/api_status", "", "user-key", StrTools::unMagic("136;213;169;133;171;147;206;117;211;152;214;221;209;213;157;197;136;158;212;220;171;211;160;215;202;172;216;125;172;174;151;171"));
     q.exec();
     QByteArray data = manager.getData();
     QJsonObject jsonObj = QJsonDocument::fromJson(data).array().first().toObject();
     if(jsonObj.isEmpty()) {
       printf("Recieved invalid IGDB server response, maybe their server is having issues, please try again later...\n");
-      if(config.verbosity >= 1)
-	printf("Answer was:\n%s\n", data.data());
-      exit(1);
+      exitNow = true;
     }
-    bool authorized = jsonObj.value("authorized").toBool();
-    if(authorized) {
+    if(jsonObj.value("authorized").toBool()) {
       QString plan = jsonObj.value("plan").toString();
       jsonObj = jsonObj.value("usage_reports").toObject().value("usage_report").toObject();
       QString limit = QString::number(jsonObj.value("max_value").toInt());
@@ -1276,21 +1302,23 @@ void Skyscraper::doPrescrapeJobs()
       printf("Plan       : %s\n", plan.toStdString().c_str());
       printf("Requests   : %s / %s\n", requests.toStdString().c_str(), limit.toStdString().c_str());
       printf("Period ends: %s\n", resetDate.toStdString().c_str());
-      if(requests.toInt() >= limit.toInt()) {
-	printf("\033[1;31mThe global monthly limit for the IGDB scraping module has been reached, can't continue...\033[0m\n");
-	exit(1);
-      }
     } else {
-      printf("IGDB says key is unauthorized, can't continue...\n");
-      if(config.verbosity >= 1)
-	printf("Answer was:\n%s\n", data.data());
-      exit(1);
+      if(jsonObj.value("status").toInt() == 403) {
+	printf("IGDB monthly request limit has been reached, can't continue with this module...\n");
+      } else {
+	printf("IGDB says key is unauthorized, can't continue with this module...\n");
+      }
+      exitNow = true;
     }
+    if(config.verbosity >= 1)
+      printf("Answer was:\n%s\n", data.data());
+    if(exitNow)
+      exit(1);
     printf("\n");
   } else if(config.scraper == "mobygames" && config.threads != 1) {
     printf("\033[1;33mForcing 1 thread to accomodate limits in MobyGames scraping module. Also be aware that MobyGames has a request limit of 360 requests per hour for the entire Skyscraper user base. So if someone else is currently using it, it will quit.\033[0m\n\n");
     config.threads = 1;
-    config.romLimit = 25;
+    config.romLimit = 35;
   } else if(config.scraper == "screenscraper") {
     if(config.user.isEmpty() || config.password.isEmpty()) {
       if(config.threads > 1) {

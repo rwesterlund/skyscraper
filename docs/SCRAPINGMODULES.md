@@ -70,7 +70,7 @@ This module also supports videos for many games.
 * User credential support: *None required*
 * API request limit: *None*
 * Thread limit: *1*
-* Platform support: *Primarily Amiga, but supports others aswell. [Check list to the right](https://openretro.org/browse/amiga/a)*
+* Platform support: *Primarily Amiga, but supports others as well. [Check list to the right](https://openretro.org/browse/amiga/a)*
 * Media support: *`cover`, `screenshot`, `marquee`*
 * Example use: `Skyscraper -p amiga -s openretro`
 
@@ -87,7 +87,7 @@ The database also supports many non-Amiga platforms, but there's no doubt that A
 * Type: *File name search based*
 * User credential support: *None required*
 * API request limit: *1 request per 10 seconds*
-* Rom limit per run: *25*
+* Rom limit per run: *35*
 * Thread limit: *1*
 * Platform support: *[List](https://www.mobygames.com/browse/games)*
 * Media support: *`cover`, `screenshot`*
@@ -102,13 +102,14 @@ There's a caveat to the module as it has quite strong restrictions for the numbe
 Please use this module sparingly. And only ever use it to scrape those last few roms you can't get any data for using any of the other sources.
 
 #### IGDB
+![IGDB logo](https://raw.githubusercontent.com/muldjord/skyscraper/master/docs/logos/igdb.png)
 * Shortname: *`igdb`*
 * Type: *Online*
 * Website: *[www.igdb.com](https://www.igdb.com)*
 * Type: *File name search based*
 * User credential support: *None required*
-* API request limit: *10000 requests per month shared among ALL Skyscraper users*
-* Rom limit per run: *5*
+* API request limit: *50000 requests per month shared among ALL Skyscraper users*
+* Rom limit per run: *35*
 * Thread limit: *1*
 * Platform support: *[List](https://www.igdb.com/platforms)*
 * Media support: *None*
@@ -116,9 +117,9 @@ Please use this module sparingly. And only ever use it to scrape those last few 
   * `Skyscraper -p fba -s igdb <SINGLE FILE TO SCRAPE>`
   * `Skyscraper -p fba -s igdb --startat <FILE TO START AT> --endat <FILE TO END AT>`
 
-IGDB is a relatively new database on the market. But absolutely not a bad one at that. It has several caveats though, as the database doesn't distinguish between platform versions of the same game when it comes to any artwork resources. This makes is less usable in a retro game scraping context as many of the games differ drastically between the old platforms. For that reason alone, this module will only provide textual data for your roms.
+IGDB is a relatively new database on the market. But absolutely not a bad one at that. It has a couple caveats though, as the database doesn't distinguish between platform versions of the same game when it comes to any artwork resources (they are working to implement this in the API during 2019). This makes it less usable in a retro game scraping context as many of the games differ drastically between the old platforms. For that reason alone, this module will only provide textual data for your roms for the time being.
 
-It also comes with a global request limit per month for the entire Skyscraper user base. When these run out, no one can use it with Skyscraper until the next month when the requests are reset. For that reason alone, it is restricted to only scraping up to 5 roms at a time.
+Please take note of the request limit per month. This is a global request limit for the entire Skyscraper user base. When these run out, no one can use it with Skyscraper until the next month when the requests are reset. For that reason alone, it is restricted to only scraping up to 5 roms at a time.
 
 Please use this module sparingly. And only ever use it to scrape those last few roms you can't get any textual data for using any of the other sources.
 

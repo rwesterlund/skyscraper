@@ -3,14 +3,16 @@ A powerful and versatile yet easy to use game scraper written in C++ for use wit
 
 Any exported artwork can be customized completely. Check the documentation for that [here](docs/ARTWORK.md).
 
+A short note on user support for Skyscraper. As the project is growing it is becoming increasingly difficult for me to handle the support requests I get from many different sources. So before asking questions, please read *all* of [the documentation](https://github.com/muldjord/skyscraper/tree/master/docs) thoroughly. If you still have questions, ask it on the [RetroPie subreddit](https://www.reddit.com/r/RetroPie/) or in the official [RetroPie forums](https://retropie.org.uk/forum). The community might be able to help you, and I might pop in to answer it myself. Thanks!
+
 #### Supported platforms (set with '-p'):
 Check the full list of platforms [here](docs/PLATFORMS.md).
 
 #### Supported scraping modules (set with '-s')
-Skyscraper supports a variety of different scraping sources called *scraping modules*. Use these to gather game data into the Skyscraper resource cache for later use when generating game lists for your chosen frontend. Check the full list of scraping modules [here](docs/SCRAPINGMODULES.md).
+Skyscraper supports a variety of different scraping sources called *scraping modules*. Use these to gather game data into the Skyscraper resource cache. Check the full list of scraping modules [here](docs/SCRAPINGMODULES.md).
 
 ##### Generating a game list with composited artwork
-Skyscraper can use all previously cached resources to generate a game list and composite artwork as described in `~/.skyscraper/artwork.xml`. Enable the *game list generator* by simply leaving out the `-s` option entirely. Read more about the resource cache [here](docs/CACHE.md).
+When you've cached some resources for any platform, Skyscraper can use this data to generate game lists for the supported frontends (default is EmulationStation). Enable the *game list generator* by simply leaving out the `-s` option. Read more about the resource cache [here](docs/CACHE.md).
 
 #### Supported frontends (set with '-f'):
 * EmulationStation
@@ -21,6 +23,8 @@ Yes, [I have one](https://www.patreon.com/muldjord). Absolutely NOT a requiremen
 
 ## How to install Skyscraper
 Follow the steps below to install the latest version of Skyscraper. Lines beginning with `$` signifies a command you need run in a terminal on the machine you wish to install it on.
+
+NOTE! If you are using the RetroPie distribution, you have the option to install Skyscraper directly from the RetroPie-Setup script (*you need to update the script before installing it!*). Read more about all of that [here](https://retropie.org.uk/docs/Scraper/#lars-muldjords-skyscraper). If not, read on.
 
 ### Install prerequisites
 #### Linux
@@ -100,26 +104,25 @@ $ Skyscraper --help
 ```
 This will give you a description of everything Skyscraper can do if you feel adventurous! For a thorough description of all available options, check [here](docs/CLIHELP.md).
 
-Let's go over the most important ones:
+The most important ones are probably:
+* `-p <PLATFORM>`
+* `-s <SCRAPING MODULE>`
+* `--cache refresh`
+* `--videos`
+* `--unattend`
 
-* `-p <PLATFORM>`: This tells Skyscraper which platform you wish to scrape during this scraping run. Check the full list of platforms under the `-p` option with `--help`
-* `-s <SCRAPING MODULE>`: This tells Skyscraper where you would like to scrape and cache resources from. Read more about that [here](docs/CACHE.md)
-* `--cache refresh`: Whenever you scrape a platform with any scraping module Skyscraper caches all of that data locally. When you rescrape a platform it will fetch the data from the cache instead of hammering the online servers. Using the `--cache refresh` option allows you to override this and tells Skyscraper to refresh the cached data directly from the online source. Please only use this option if you know the data you want to scrape has changed at the source
-* `--videos`: If you wish to scrape videos for the scraping modules that support it, you need to add the `--videos` option. This is disabled by default because of the significant space requirements needed to save them
-* `--unattend`: This just bypasses any questions at the beginning of a scraping run. Setting `--unattend` will then always answer yes to overwriting an existing game list and not skip existing entries
-
-If you have your roms in a non-default location (default is `/home/<user>/RetroPie/roms/<platform>`) or wish to export the game list or artwork to non-default locations, you will also need these:
-* `-i <PATH>`: Sets a non-default rom input folder
-* `-g <PATH>`: Sets a non-default game list export folder (defaults to the same as rom input folder if scraping for EmulationStation)
-* `-o <PATH>`: Sets a non-default artwork export folder (defaults to the same as game list export folder + `/media` if scraping for EmulationStation)
+If you have your roms in a non-default location (default is `/home/<USER>/RetroPie/roms/<PLATFORM>`) or wish to export the game list or artwork to non-default locations, you will also need these:
+* `-i <PATH>`
+* `-g <PATH>`
+* `-o <PATH>`
 
 For almost any command line option, consider setting them in the `~/.skyscraper/config.ini` file as described [here](#docs/CONFIGINI.md). This will make the options permanent so you don't need to type them in all the time.
 
 #### Scraping and caching single roms or a subset of roms
-Sometimes you'd want to update the cached data for a single or a subset of roms. Skyscraper allows this by letting you either provide one or more single rom filenames to be added to the end of a command line OR by using the `--startat` and `--endat` options (read more about those with `--help`). For single roms, here's an example: `Skyscraper -p amiga -s openretro "/path/to/rom name.lha"`. Be aware that this only updates the resource cache for this particular rom. It DOES NOT update it in your game list. To do so you need to regenerate the game list by simply leaving out the `-s` option entirely like so `Skyscraper -p [platform]`.
+Sometimes you'd want to update the cached data for a single or a subset of roms. Skyscraper allows this by letting you either provide one or more single rom filenames to be added to the end of a command line OR by using the `--startat` and `--endat` options (read more about those options [here](docs/CLIHELP.md)). For single roms, here's an example: `Skyscraper -p amiga -s openretro "/path/to/rom name.lha"`. Be aware that this only updates the resource cache for this particular rom. It DOES NOT update it in your game list. To do so you need to regenerate the game list by simply leaving out the `-s` option entirely like so `Skyscraper -p <PLATFORM>`.
 
 ### config.ini
-A lesser known, but extremely useful, feature of Skyscraper is to add your desired config variables to `~/.skyscraper/config.ini`. Any options set in this file will be used by default by Skyscraper. So if you always use, for example, `-i [some folder]` on command line, you can set the matching option `inputFolder="[some folder]"` in the config.
+A lesser known, but extremely useful, feature of Skyscraper is to add your desired config variables to `~/.skyscraper/config.ini`. Any options set in this file will be used by default by Skyscraper. So if you always use, for example, `-i <SOME FOLDER>` on command line, you can set the matching option `inputFolder="<SOME FOLDER>"` in the config.
 
 For a full description of all availabe config options, check [here](docs/CONFIGINI.md).
 
@@ -127,7 +130,7 @@ For a full description of all availabe config options, check [here](docs/CONFIGI
 One of Skyscraper's most powerful features is the resource cache. It's important to understand how this works in order to use Skyscraper to its full potential. Read more about it [here](docs/CACHE.md).
 
 ### Custom data import
-I addition to allowing scraping from locally cached resources, Skyscraper also allows you to import your own data into the resource cache with the `-s import` scraping module which in turn allows you to scrape your roms with the data. Read more about how this works [here](docs/IMPORT.md).
+I addition to allowing scraping from locally cached resources, Skyscraper also allows you to import your own data into the resource cache with the `-s import` scraping module. Read more about how this works [here](docs/IMPORT.md).
 
 ### Artwork look and effects
 Check the full artwork documentation [here](docs/ARTWORK.md)
@@ -140,6 +143,35 @@ Check the full artwork documentation [here](docs/ARTWORK.md)
 * Add the option to edit cached data for any game
 * Add the option to scrape from cached data purely originating from certain scraping modules
 * Consider making aliasMap the global baseName instead of just the search term base name. This will fix missing brackets in alias names being ignored later on
+* Make it more clear when Skyscraper is in gathering and game list generation mode. In gathering mode, consider only showing output for game that aren't loaded from cache
+
+#### Version 3.0.5 (25th February 2019)
+* Fixed bug in ScreenScraper module that would cause credential-less scraping to fail often
+
+#### Version 3.0.4 (18th February 2019)
+* Improved Amiga CD32 disc image support to prep for the upcoming support in Amiberry (Thank you to 'HoraceAndTheSpider' for the heads up)
+* Added check for Qt5.4.0 and ignores QStorageInfo include if requirement not met (Thank you to 'ByteThis' for reporting this issue)
+* Improved work around to fix invalid XML returned by ScreenScraper
+
+#### Version 3.0.3 (16th February 2019)
+* Worked around a flaw in the returned screenscraper xml results which caused many games to not be recognized due to invalid xml being returned (Thank you to 'Brunnis' for reporting this)
+* Improved SIGINT handler to now allow unclean exit if user is VERY adament about it
+
+#### Version 3.0.2 (14th February 2019)
+* Upped the rom limit from 5 to 35 for the "igdb" module
+* Upped the rom limit from 25 to 35 for the "mobygames" module
+* Added media cache config options to module section
+* Add Sharp X1 platform as "x1"
+* Now exits nicely when running low on disk space
+* Added 'spaceCheck=<BOOL>' to config.ini
+* Fixed crash when using '--startat' and '--endat' where the '--endat' file name came before the '--startat' file name. Note! What 'ls' reports in alphabetical order is not always what Skyscraper see as it it locale specific. So be aware of this. A huge thanks to 'Gemba' for taking the time to investigate this bug thoroughly.
+* Fixed bug in game list metadata preservation when using relativePaths and '<folder>' entries (thank you to 'HumanRob' for reporting this)
+* Fixed game list entries skipping for 'relativePaths' and '<folder>' instances
+* Skyscraper now saves the cache and exits nicely on ctrl+c (SIGINT) (thanks to 'krcroft' for pointing this out)
+* The 'screenscraper' module now includes 'systemeid' in the query for better results
+* Now skips the game list assembling when in gathering mode
+* Now skips cache saving when in game list generation mode
+* Output now says whether it was a gathering run or a game list generation run
 
 #### Version 3.0.1 (27th January 2019)
 * Added note for '--query' option when user forgets to add a file name on command line
