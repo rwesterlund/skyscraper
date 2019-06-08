@@ -76,6 +76,7 @@ struct Settings {
   bool stats = false;
   bool nohints = false;
   int verbosity = 0;
+  QString frontendFolder = "";
   int maxFails = 42;
   bool skipped = false;
   QString artworkConfig = "artwork.xml";

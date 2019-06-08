@@ -1090,6 +1090,9 @@ void Skyscraper::loadConfig(const QCommandLineParser &parser)
   if(parser.isSet("verbosity")) {
     config.verbosity = parser.value("verbosity").toInt();
   }
+  if(parser.isSet("frontendfolder")) {
+	config.frontendFolder = parser.value("frontendfolder");
+  }
 
   frontend->checkReqs();
 

@@ -228,6 +228,7 @@ int main(int argc, char *argv[])
   QCommandLineOption langOption("lang", "Set preferred result language for scraping modules that support it.\n(Default 'en')", "CODE", "en");
   QCommandLineOption nohintsOption("nohints", "Disables the 'DID YOU KNOW:' hints when running Skyscraper.");
   QCommandLineOption verbosityOption("verbosity", "Print more info while scraping\n(Default is 0.)", "0-3", "0");
+  QCommandLineOption frontendfolderOption("frontendfolder", "Specifies the frontend installation directory. Used to find emulator specifications on Windows when frontend is attractmode.", "PATH", "");
   
   parser.addOption(pOption);
   parser.addOption(sOption);
@@ -271,6 +272,7 @@ int main(int argc, char *argv[])
   parser.addOption(regionOption);
   parser.addOption(nohintsOption);
   parser.addOption(verbosityOption);
+  parser.addOption(frontendfolderOption);
 
   parser.process(app);
 

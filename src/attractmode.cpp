@@ -256,6 +256,12 @@ void AttractMode::checkReqs()
     return;
   }
 
+  if (!config->frontendFolder.isEmpty()) {
+	  if (checkEmulatorFile(config->frontendFolder + "/emulators/" + config->emulator)) {
+		  return;
+	  }
+  }
+
   printf("Couldn't locate emulator cfg file, exiting...\n");
   exit(1);
 }
