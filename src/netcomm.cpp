@@ -28,17 +28,17 @@
 #include <QUrl>
 #include <QNetworkRequest>
 
+#define MAXSIZE 42000000
+
 NetComm::NetComm()
 {
-  //connect(this, &NetComm::finished, this, &NetComm::replyFinished);
   requestTimer.setSingleShot(true);
   requestTimer.setInterval(60000);
-  connect(&requestTimer, &QTimer::timeout, this, &NetComm::cancelRequest);
+  connect(&requestTimer, &QTimer::timeout, this, &NetComm::requestTimeout);
 }
 
 void NetComm::request(QString query, QString postData, QString headerKey, QString headerValue)
 {
-  clearAll();
   QUrl url(query);
   QNetworkRequest request(url);
   request.setHeader(QNetworkRequest::UserAgentHeader, "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/57.0.2987.133 Safari/537.36");
@@ -53,16 +53,16 @@ void NetComm::request(QString query, QString postData, QString headerKey, QStrin
     reply = post(request, postData.toUtf8());
   }
   connect(reply, &QNetworkReply::finished, this, &NetComm::replyReady);
+  connect(reply, &QNetworkReply::downloadProgress, this, &NetComm::dataDownloaded);
   requestTimer.start();
 }
 
 void NetComm::replyReady()
 {
-  disconnect(reply, &QNetworkReply::finished, this, &NetComm::replyReady);
   requestTimer.stop();
-  contentType = reply->rawHeader("Content-Type");
-  redirUrl = reply->rawHeader("Location");
   data = reply->readAll();
+  contentType = reply->rawHeader("Content-Type");;
+  redirUrl = reply->rawHeader("Location");
   reply->deleteLater();
   emit dataReady();
 }
@@ -82,20 +82,16 @@ QByteArray NetComm::getRedirUrl()
   return redirUrl;
 }
 
-void NetComm::cancelRequest()
+void NetComm::dataDownloaded(qint64 bytesReceived, qint64)
 {
-  disconnect(reply, &QNetworkReply::finished, this, &NetComm::replyReady);
-  reply->abort();
-  reply->deleteLater();
-  clearAll();
-
-  emit dataReady();
+  if(bytesReceived > MAXSIZE) {
+    printf("Too much data! API is buggy, cancelling network request...\n");
+    reply->abort();
+  }
 }
 
-void NetComm::clearAll()
-{
-  //clearAccessCache();
-  redirUrl.clear();
-  contentType.clear();
-  data.clear();
+void NetComm::requestTimeout()
+{ 
+  printf("Request timed out, aborting request...\n");
+  reply->abort();
 }

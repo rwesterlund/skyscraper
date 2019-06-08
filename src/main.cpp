@@ -23,7 +23,18 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA.
  */
 
+#include <QtGlobal>
+
+// Includes for Linux and MacOS
+#if defined(Q_OS_LINUX) || defined(Q_OS_MACOS)
 #include <signal.h>
+#endif
+
+// Includes for Windows
+#if defined(Q_OS_WIN)
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
+#endif
 
 #include <QCoreApplication>
 #include <QDir>
@@ -72,9 +83,21 @@ void customMessageHandler(QtMsgType type, const QMessageLogContext&, const QStri
   fflush(stdout);
 }
 
-void sigHandler(int signal) {
+#if defined(Q_OS_LINUX) || defined(Q_OS_MACOS)
+void sigHandler(int signal)
+#endif
+#if defined(Q_OS_WIN)
+BOOL WINAPI ConsoleHandler(DWORD dwType)
+#endif
+{
+#if defined(Q_OS_LINUX) || defined(Q_OS_MACOS)
   if(signal == 2) {
     sigIntRequests++;
+#endif
+#if defined(Q_OS_WIN)
+  if(dwType == CTRL_C_EVENT) {
+    sigIntRequests++;
+#endif
     if(sigIntRequests <= 2) {
       if(x->threadsRunning) {
 	printf("User wants to quit, trying to exit nicely. This can take a few seconds depending on how many threads you have running...\n");
@@ -87,13 +110,14 @@ void sigHandler(int signal) {
       exit(1);
     }
   }
+#if defined(Q_OS_WIN)
+  return TRUE;
+#endif
 }
 
 int main(int argc, char *argv[])
 {
-#if defined(Q_OS_WIN)
-	signal(SIGINT, sigHandler);
-#else
+#if defined(Q_OS_LINUX) || defined(Q_OS_MACOS)
   struct sigaction sigIntHandler;
   
   sigIntHandler.sa_handler = sigHandler;
@@ -101,6 +125,10 @@ int main(int argc, char *argv[])
   sigIntHandler.sa_flags = 0;
   
   sigaction(SIGINT, &sigIntHandler, NULL);
+#endif
+
+#if defined(Q_OS_WIN)
+  SetConsoleCtrlHandler((PHANDLER_ROUTINE)ConsoleHandler, TRUE);
 #endif
   
   QCoreApplication app(argc, argv);
@@ -182,8 +210,8 @@ int main(int argc, char *argv[])
   QCommandLineOption nobracketsOption("nobrackets", "Disables any [] and () tags in the frontend game titles.");
   QCommandLineOption relativeOption("relative", "Forces all gamelist paths to be relative to rom location.");
   QCommandLineOption addextOption("addext", "Add this or these file extension(s) to accepted file extensions during a scraping run. (example: '*.zst' or '*.zst *.ext)", "EXTENSION(S)", "");
-  QCommandLineOption cacheOption("cache", "This option is the master option for all options related to the resource cache. It must be followed by 'COMMAND[:OPTIONS]'.\n'show' Will print a status of all cached resources.\n'validate' will check the consistency of the cache.\n'vacuum' Will compare your romset to any cached resource and remove the resources that you no longer have roms for.\n'purge:all' Will remove ALL cached resources for the selected platform.\n'merge:<PATH>' will merge two caches together.\n'purge:m=<MODULE>,t=<TYPE>' Will remove cached resources related to the selected module(m) and / or type(t). Either one can be left out in which case ALL resources from the selected module or ALL resources from the selected type will be removed.\n'refresh' Will force a refresh of existing cached resources for any scraping module. Requires a scraping module set with '-s'.", "COMMAND[:OPTIONS]", "");
-  QCommandLineOption refreshOption("refresh", "DEPRECATED! Please use '--cache refresh' instead.");
+  QCommandLineOption cacheOption("cache", "This option is the master option for all options related to the resource cache. It must be followed by 'COMMAND[:OPTIONS]'.\n'show' Will print a status of all cached resources.\n'validate' will check the consistency of the cache.\n'edit' will allow editing of the resources in the rom queue.\n'vacuum' Will compare your romset to any cached resource and remove the resources that you no longer have roms for.\n'merge:<PATH>' will merge two caches together.\n'purge:all' Will remove ALL cached resources for the selected platform.\n'purge:m=<MODULE>,t=<TYPE>' Will remove cached resources related to the selected module(m) and / or type(t). Either one can be left out in which case ALL resources from the selected module or ALL resources from the selected type will be removed.\n'refresh' Will force a refresh of existing cached resources for any scraping module. Requires a scraping module set with '-s'.", "COMMAND[:OPTIONS]", "");
+  QCommandLineOption refreshOption("refresh", "Same as '--cache refresh'.");
   QCommandLineOption noresizeOption("noresize", "Disable resizing of artwork when saving it to the resource cache. Normally they are resized to save space. Setting this option will save them as is. NOTE! This is NOT related to how Skyscraper renders the artwork when scraping. Check the online 'Artwork' documentation to know more about this.");
   QCommandLineOption nosubdirsOption("nosubdirs", "Do not include input folder subdirectories when scraping.");
   QCommandLineOption unpackOption("unpack", "Unpacks and checksums the file inside 7z or zip files instead of the compressed file itself. Be aware that this option requires '7z' to be installed on the system to work. Only relevant for 'screenscraper' scraping module.");

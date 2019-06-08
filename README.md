@@ -47,7 +47,7 @@ $ brew link qt5 --force
 If that went well, proceed to the default installation instructions below. It should work and give you a working installation of Skyscraper.
 
 #### Windows
-Windows is not supported at this time.
+Windows is not supported at this time! But I did compile Skyscraper 3.1.2 and it seemingly works ok. So just to be clear: You are on your own if you use this version. Get it [here](http://www.muldjord.com/downloads/Skyscraper_3.1.2_unsupported_win_version.zip).
 
 ### Download, compile and install
 When you've installed the prerequisites as described above, you can install Skyscraper by typing in the following commands:
@@ -116,10 +116,10 @@ If you have your roms in a non-default location (default is `/home/<USER>/RetroP
 * `-g <PATH>`
 * `-o <PATH>`
 
-For almost any command line option, consider setting them in the `~/.skyscraper/config.ini` file as described [here](#docs/CONFIGINI.md). This will make the options permanent so you don't need to type them in all the time.
+For almost any command line option, consider setting them in the `~/.skyscraper/config.ini` file as described [here](docs/CONFIGINI.md). This will make the options permanent so you don't need to type them in all the time.
 
 #### Scraping and caching single roms or a subset of roms
-Sometimes you'd want to update the cached data for a single or a subset of roms. Skyscraper allows this by letting you either provide one or more single rom filenames to be added to the end of a command line OR by using the `--startat` and `--endat` options (read more about those options [here](docs/CLIHELP.md)). For single roms, here's an example: `Skyscraper -p amiga -s openretro "/path/to/rom name.lha"`. Be aware that this only updates the resource cache for this particular rom. It DOES NOT update it in your game list. To do so you need to regenerate the game list by simply leaving out the `-s` option entirely like so `Skyscraper -p <PLATFORM>`.
+Sometimes you'd want to update the cached data for a single or a subset of roms. Skyscraper allows this by letting you either provide one or more single rom filenames to be added to the end of a command line OR by using the `--startat` and `--endat` options (read more about those options [here](docs/CLIHELP.md#--startat-filename)). For single roms here's an example: `Skyscraper -p amiga -s openretro "/path/to/rom name.lha"`. Be aware that this only updates the resource cache for this particular rom. It DOES NOT update it in your game list. To do so you need to regenerate the game list by simply leaving out the `-s` option entirely like so `Skyscraper -p <PLATFORM>`.
 
 ### config.ini
 A lesser known, but extremely useful, feature of Skyscraper is to add your desired config variables to `~/.skyscraper/config.ini`. Any options set in this file will be used by default by Skyscraper. So if you always use, for example, `-i <SOME FOLDER>` on command line, you can set the matching option `inputFolder="<SOME FOLDER>"` in the config.
@@ -137,16 +137,39 @@ Check the full artwork documentation [here](docs/ARTWORK.md)
 
 ## Release notes
 
-#### Version x.x.x (still unimplemented)
+#### Version x.x.x (Still unimplemented)
 * Add "sharpen" effect which sharpens the image
 * Improved "blur" and "shadow" effect to be true gaussian
-* Add the option to edit cached data for any game
 * Add the option to scrape from cached data purely originating from certain scraping modules
 * Consider making aliasMap the global baseName instead of just the search term base name. This will fix missing brackets in alias names being ignored later on
 * Make it more clear when Skyscraper is in gathering and game list generation mode. In gathering mode, consider only showing output for game that aren't loaded from cache
+* Make all artwork types custom meaning that their type can be whatever the user wants. The sources will create ones with known types such as 'screenshot' and 'cover', but the user can import other types they define themselves, such as 'cabinet' or whatever else. Internally artwork is then handled by a list of artwork instead of 4 hardcoded types in GameEntry
+* Introduce the ability to use <BASENAME> in the 'file="somefolder/<BASENAME>.png"' in artwork.xml which would then look for a file in 'resources' with the game basename.png allowing users to use their own custom artwork data as a workaround to adding new types to import (Thank you to 'jueank' for suggesting this)
 
-#### Version 3.0.5 (25th February 2019)
-* Fixed bug in ScreenScraper module that would cause credential-less scraping to fail often
+#### Version 3.1.4 (23rd March 2019)
+* Refactored network communication class
+* Added request download size limit to work around possible bug in ScreenScraper API
+
+#### Version 3.1.3 (12th March 2019)
+* Improved 'screenscraper' error handling
+
+#### Version 3.1.2 (10th March 2019)
+* Added support for Moonlight '*.ml' extension for all platforms
+* Added 'ps2' platform for use with Moonlight and all other supported Ps2 extensions
+* Added 'steam' platform for use with Moonlight '*.ml' files
+* Fixed minor bug in CRC checksum calculator for 'screenscraper'
+* Improved workarounds for ScreenScraper XML errors
+
+#### Version 3.1.1 (8th March 2019)
+* Worked around a bug in the 'screenscraper' xml output improving stability
+* Added limiter to media getter functions for 'screenscraper' which should improve stability
+
+#### Version 3.1.0 (2th March 2019)
+* MAJOR: Added '--cache edit' command line option which allows viewing, editing and deleting cached resources for the roms in the queue. Narrow the queue down by providing file names on command line or by using '--startat <FILENAME>' and '--endat <FILENAME>'
+* Added 'zx81' platform. Note! The only module that supports it is the 'screenscraper' module
+
+#### Version 3.0.5 (26th February 2019)
+* Fixed and improved ES metadata preservation code
 
 #### Version 3.0.4 (18th February 2019)
 * Improved Amiga CD32 disc image support to prep for the upcoming support in Amiberry (Thank you to 'HoraceAndTheSpider' for the heads up)

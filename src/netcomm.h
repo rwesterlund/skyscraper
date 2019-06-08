@@ -44,18 +44,18 @@ public:
 
 private slots:
   void replyReady();
-  void cancelRequest();
+  void dataDownloaded(qint64 bytesReceived, qint64);
+  void requestTimeout();
 
 signals:
   void dataReady();
   
 private:
-  void clearAll();
   QTimer requestTimer;
-  QNetworkReply *reply;
-  QByteArray redirUrl;
-  QByteArray contentType;
   QByteArray data;
+  QByteArray contentType;
+  QByteArray redirUrl;
+  QNetworkReply *reply;
 };
 
 #endif // NETCOMM_H
